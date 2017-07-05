@@ -1,3 +1,18 @@
 canvas {
   image-rendering: -moz-crisp-edges;
 }
+
+.puzzle-display {
+  border: none;
+}
+
+.puzzle-display .cell {
+  padding: 0;
+  margin: 0;
+  width: 15px;
+  height: 15px;
+}
+
+.puzzle-display .filled {
+  background: #000;
+}

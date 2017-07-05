@@ -4,8 +4,10 @@ var path = require('path');
 module.exports = {
   entry: './src/js/index.js',
   output: {
-    filename: './src/js/bundle.js',
+    path: path.resolve(__dirname, 'src'),
+    filename: 'js/bundle.js',
   },
+  devtool: 'source-map',
   module: {
     rules: [
       {
@@ -16,7 +18,7 @@ module.exports = {
     ],
   },
   devServer: {
-    contentBase: path.join(__dirname, 'src'),
+    contentBase: path.resolve(__dirname, 'src'),
     port: 9000
   },
 };

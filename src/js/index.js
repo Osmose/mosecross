@@ -1,25 +1,109 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-
-ReactDOM.render(
-  <h1>Hello, world!</h1>,
-  document.getElementById('game')
-);
-
+import autobind from 'autobind-decorator';
 
 const SCALE = 20;
 
-const fileInput = document.querySelector('#file');
-const gameContainer = document.querySelector('#game');
+@autobind
+class Game extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      puzzle: null,
+    };
+  }
 
-fileInput.addEventListener('change', event => {
-  const imageFile = event.target.files[0];
-  const image = new Image();
-  image.onload = () => {
-    render(image);
-  };
-  image.src = URL.createObjectURL(imageFile);
-});
+  handleSelectPuzzleImage(puzzle) {
+    this.setState({puzzle});
+  }
+
+  render() {
+    const { puzzle } = this.state;
+    return (
+      <div>
+        {puzzle
+          ? <PuzzleDisplay puzzle={puzzle} />
+          : <ImageSelector onSelect={this.handleSelectPuzzleImage} />
+        }
+      </div>
+    )
+  }
+}
+
+@autobind
+class ImageSelector extends React.Component {
+  handleFileChange(event) {
+    const imageFile = event.target.files[0];
+    const image = new Image();
+    image.onload = () => {
+      this.props.onSelect(
+        convertImageToPuzzle(image),
+      );
+    };
+    image.src = URL.createObjectURL(imageFile);
+  }
+
+  render() {
+    return (
+      <label>
+        <span>Custom Image:</span>
+        <input type="file" onChange={this.handleFileChange} />
+      </label>
+    );
+  }
+}
+
+class PuzzleDisplay extends React.Component {
+  render() {
+    const { puzzle } = this.props;
+    return (
+      <table className="puzzle-display">
+        <tbody>
+          {puzzle.data.map((row, y) => (
+            <tr key={`row:${y}`}>
+              {row.map((cell, x) => (
+                <td key={`row:${y},col:${x}`} className={cell ? 'cell filled' : 'cell empty'} />
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+}
+
+function convertImageToPuzzle(image) {
+  const canvas = document.createElement('canvas');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(image, 0, 0);
+  ctx.drawImage(convertTo2Bit(canvas), 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const puzzleData = [];
+  for (var y = 0; y < canvas.height; y++) {
+    const row = [];
+    for (var x = 0; x < canvas.width; x++) {
+      const index = (y * 4 * canvas.width) + (x * 4);
+      row.push(imageData[index] === 0);
+    }
+    puzzleData.push(row);
+  }
+  return new Puzzle(puzzleData, canvas.width, canvas.height);
+}
+
+class Puzzle {
+  constructor(data, width, height) {
+    this.data = data;
+    this.width = width;
+    this.height = height;
+  }
+
+  get(x, y) {
+    return this.data[y][x];
+  }
+}
 
 function convertTo2Bit(originalCanvas) {
   const canvas = document.createElement('canvas');
@@ -76,3 +160,8 @@ function render(image) {
 
   gameContainer.appendChild(mainCanvas);
 }
+
+ReactDOM.render(
+  <Game />,
+  document.getElementById('game')
+);

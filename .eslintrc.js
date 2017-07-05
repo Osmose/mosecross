@@ -3,6 +3,10 @@ module.exports = {
     'eslint:recommended',
     'plugin:react/recommended',
   ],
+  parser: 'babel-eslint',
+  rules: {
+    "strict": 0
+  },
   parserOptions: {
     ecmaVersion: 6,
     sourceType: 'module',
@@ -17,4 +21,7 @@ module.exports = {
   plugins: [
     'react',
   ],
+  rules: {
+    'react/prop-types': 'off',
+  },
 };
