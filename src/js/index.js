@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import autobind from 'autobind-decorator';
 
-const SCALE = 20;
 
 @autobind
 class Game extends React.Component {
@@ -59,10 +58,32 @@ class PuzzleDisplay extends React.Component {
     return (
       <table className="puzzle-display">
         <tbody>
-          {puzzle.data.map((row, y) => (
-            <tr key={`row:${y}`}>
-              {row.map((cell, x) => (
-                <td key={`row:${y},col:${x}`} className={cell ? 'cell filled' : 'cell empty'} />
+          <tr>
+            <th></th>
+            {puzzle.colCounts.map((colCount, col) => (
+              <th key={col}>
+                <div className="count-container column-count-container">
+                  {colCount.map((count, countIndex) => (
+                    <div key={countIndex} className="count">{count}</div>
+                  ))}
+                </div>
+              </th>
+            ))}
+          </tr>
+          {puzzle.data.map((rowData, row) => (
+            <tr key={`row:${row}`}>
+              <th>
+                <div className="count-container row-count-container">
+                  {puzzle.rowCounts[row].map((count, countIndex) => (
+                    <div key={countIndex} className="count">{count}</div>
+                  ))}
+                </div>
+              </th>
+              {rowData.map((cell, col) => (
+                <td
+                  key={`row:${row},col:${col}`}
+                  className={cell ? 'cell filled' : 'cell empty'}
+                />
               ))}
             </tr>
           ))}
@@ -82,13 +103,13 @@ function convertImageToPuzzle(image) {
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
   const puzzleData = [];
-  for (var y = 0; y < canvas.height; y++) {
-    const row = [];
-    for (var x = 0; x < canvas.width; x++) {
-      const index = (y * 4 * canvas.width) + (x * 4);
-      row.push(imageData[index] === 0);
+  for (let row = 0; row < canvas.height; row++) {
+    const rowData = [];
+    for (let col = 0; col < canvas.width; col++) {
+      const index = (row * 4 * canvas.width) + (col * 4);
+      rowData.push(imageData[index] === 0);
     }
-    puzzleData.push(row);
+    puzzleData.push(rowData);
   }
   return new Puzzle(puzzleData, canvas.width, canvas.height);
 }
@@ -98,10 +119,36 @@ class Puzzle {
     this.data = data;
     this.width = width;
     this.height = height;
+
+    this.rowCounts = [];
+    for (let row = 0; row < height; row++) {
+      const count = [0];
+      for (let col = 0; col < width; col++) {
+        if (this.get(row, col)) {
+          count[count.length - 1]++;
+        } else {
+          count.push(0);
+        }
+      }
+      this.rowCounts.push(count.filter(c => c > 0));
+    }
+
+    this.colCounts = [];
+    for (let col = 0; col < width; col++) {
+      const count = [0];
+      for (let row = 0; row < height; row++) {
+        if (this.get(row, col)) {
+          count[count.length - 1]++;
+        } else {
+          count.push(0);
+        }
+      }
+      this.colCounts.push(count.filter(c => c > 0));
+    }
   }
 
-  get(x, y) {
-    return this.data[y][x];
+  get(row, col) {
+    return this.data[row][col];
   }
 }
 
@@ -141,24 +188,6 @@ function convertTo2Bit(originalCanvas) {
 
   ctx.putImageData(imageData, 0, 0);
   return canvas;
-}
-
-function render(image) {
-  const canvas = document.createElement('canvas');
-  canvas.width = image.width;
-  canvas.height = image.height;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(image, 0, 0);
-
-  const mainCanvas = document.createElement('canvas');
-  mainCanvas.width = image.width;
-  mainCanvas.height = image.height;
-  mainCanvas.style.width = `${image.width * SCALE}px`;
-  mainCanvas.style.height = `${image.height * SCALE}px`;
-  const mainCtx = mainCanvas.getContext('2d');
-  mainCtx.drawImage(convertTo2Bit(canvas), 0, 0);
-
-  gameContainer.appendChild(mainCanvas);
 }
 
 ReactDOM.render(

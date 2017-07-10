@@ -1,9 +1,19 @@
+* {
+  box-sizing: border-box;
+}
+
 canvas {
   image-rendering: -moz-crisp-edges;
 }
 
 .puzzle-display {
   border: none;
+  border-collapse: collapse;
+}
+
+.puzzle-display th,
+.puzzle-display td {
+  border: 1px solid #000;
 }
 
 .puzzle-display .cell {
@@ -13,6 +23,18 @@ canvas {
   height: 15px;
 }
 
+th {
+  text-align: right;
+  vertical-align: bottom;
+}
+
 .puzzle-display .filled {
   background: #000;
+}
+
+.count {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  text-align: center;
 }
