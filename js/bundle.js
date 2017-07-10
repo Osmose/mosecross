@@ -9749,6 +9749,8 @@ module.exports = getHostComponentFromComposite;
 "use strict";
 
 
+var _class, _class2;
+
 var _react = __webpack_require__(82);
 
 var _react2 = _interopRequireDefault(_react);
@@ -9757,27 +9759,173 @@ var _reactDom = __webpack_require__(98);
 
 var _reactDom2 = _interopRequireDefault(_reactDom);
 
+var _autobindDecorator = __webpack_require__(184);
+
+var _autobindDecorator2 = _interopRequireDefault(_autobindDecorator);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_reactDom2.default.render(_react2.default.createElement(
-  'h1',
-  null,
-  'Hello, world!'
-), document.getElementById('game'));
+let Game = (0, _autobindDecorator2.default)(_class = class Game extends _react2.default.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      puzzle: null
+    };
+  }
 
-const SCALE = 20;
+  handleSelectPuzzleImage(puzzle) {
+    this.setState({ puzzle });
+  }
 
-const fileInput = document.querySelector('#file');
-const gameContainer = document.querySelector('#game');
+  render() {
+    const puzzle = this.state.puzzle;
 
-fileInput.addEventListener('change', event => {
-  const imageFile = event.target.files[0];
-  const image = new Image();
-  image.onload = () => {
-    render(image);
-  };
-  image.src = URL.createObjectURL(imageFile);
-});
+    return _react2.default.createElement(
+      'div',
+      null,
+      puzzle ? _react2.default.createElement(PuzzleDisplay, { puzzle: puzzle }) : _react2.default.createElement(ImageSelector, { onSelect: this.handleSelectPuzzleImage })
+    );
+  }
+}) || _class;
+
+let ImageSelector = (0, _autobindDecorator2.default)(_class2 = class ImageSelector extends _react2.default.Component {
+  handleFileChange(event) {
+    const imageFile = event.target.files[0];
+    const image = new Image();
+    image.onload = () => {
+      this.props.onSelect(convertImageToPuzzle(image));
+    };
+    image.src = URL.createObjectURL(imageFile);
+  }
+
+  render() {
+    return _react2.default.createElement(
+      'label',
+      null,
+      _react2.default.createElement(
+        'span',
+        null,
+        'Custom Image:'
+      ),
+      _react2.default.createElement('input', { type: 'file', onChange: this.handleFileChange })
+    );
+  }
+}) || _class2;
+
+let PuzzleDisplay = class PuzzleDisplay extends _react2.default.Component {
+  render() {
+    const puzzle = this.props.puzzle;
+
+    return _react2.default.createElement(
+      'table',
+      { className: 'puzzle-display' },
+      _react2.default.createElement(
+        'tbody',
+        null,
+        _react2.default.createElement(
+          'tr',
+          null,
+          _react2.default.createElement('th', null),
+          puzzle.colCounts.map((colCount, col) => _react2.default.createElement(
+            'th',
+            { key: col },
+            _react2.default.createElement(
+              'div',
+              { className: 'count-container column-count-container' },
+              colCount.map((count, countIndex) => _react2.default.createElement(
+                'div',
+                { key: countIndex, className: 'count' },
+                count
+              ))
+            )
+          ))
+        ),
+        puzzle.data.map((rowData, row) => _react2.default.createElement(
+          'tr',
+          { key: `row:${row}` },
+          _react2.default.createElement(
+            'th',
+            null,
+            _react2.default.createElement(
+              'div',
+              { className: 'count-container row-count-container' },
+              puzzle.rowCounts[row].map((count, countIndex) => _react2.default.createElement(
+                'div',
+                { key: countIndex, className: 'count' },
+                count
+              ))
+            )
+          ),
+          rowData.map((cell, col) => _react2.default.createElement('td', {
+            key: `row:${row},col:${col}`,
+            className: cell ? 'cell filled' : 'cell empty'
+          }))
+        ))
+      )
+    );
+  }
+};
+
+
+function convertImageToPuzzle(image) {
+  const canvas = document.createElement('canvas');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(image, 0, 0);
+  ctx.drawImage(convertTo2Bit(canvas), 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const puzzleData = [];
+  for (let row = 0; row < canvas.height; row++) {
+    const rowData = [];
+    for (let col = 0; col < canvas.width; col++) {
+      const index = row * 4 * canvas.width + col * 4;
+      rowData.push(imageData[index] === 0);
+    }
+    puzzleData.push(rowData);
+  }
+  return new Puzzle(puzzleData, canvas.width, canvas.height);
+}
+
+let Puzzle = class Puzzle {
+  constructor(data, width, height) {
+    this.data = data;
+    this.width = width;
+    this.height = height;
+
+    this.rowCounts = [];
+    for (let row = 0; row < height; row++) {
+      const count = [0];
+      for (let col = 0; col < width; col++) {
+        if (this.get(row, col)) {
+          count[count.length - 1]++;
+        } else {
+          count.push(0);
+        }
+      }
+      this.rowCounts.push(count.filter(c => c > 0));
+    }
+
+    this.colCounts = [];
+    for (let col = 0; col < width; col++) {
+      const count = [0];
+      for (let row = 0; row < height; row++) {
+        if (this.get(row, col)) {
+          count[count.length - 1]++;
+        } else {
+          count.push(0);
+        }
+      }
+      this.colCounts.push(count.filter(c => c > 0));
+    }
+  }
+
+  get(row, col) {
+    return this.data[row][col];
+  }
+};
+
 
 function convertTo2Bit(originalCanvas) {
   const canvas = document.createElement('canvas');
@@ -9817,23 +9965,7 @@ function convertTo2Bit(originalCanvas) {
   return canvas;
 }
 
-function render(image) {
-  const canvas = document.createElement('canvas');
-  canvas.width = image.width;
-  canvas.height = image.height;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(image, 0, 0);
-
-  const mainCanvas = document.createElement('canvas');
-  mainCanvas.width = image.width;
-  mainCanvas.height = image.height;
-  mainCanvas.style.width = `${image.width * SCALE}px`;
-  mainCanvas.style.height = `${image.height * SCALE}px`;
-  const mainCtx = mainCanvas.getContext('2d');
-  mainCtx.drawImage(convertTo2Bit(canvas), 0, 0);
-
-  gameContainer.appendChild(mainCanvas);
-}
+_reactDom2.default.render(_react2.default.createElement(Game, null), document.getElementById('game'));
 
 /***/ }),
 /* 82 */
@@ -22471,5 +22603,116 @@ var ReactDOMInvalidARIAHook = {
 module.exports = ReactDOMInvalidARIAHook;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
+/***/ }),
+/* 184 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/**
+ * @copyright 2015, Andrey Popp <8mayday@gmail.com>
+ *
+ * The decorator may be used on classes or methods
+ * ```
+ * @autobind
+ * class FullBound {}
+ *
+ * class PartBound {
+ *   @autobind
+ *   method () {}
+ * }
+ * ```
+ */
+
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+exports['default'] = autobind;
+
+function autobind() {
+  for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+    args[_key] = arguments[_key];
+  }
+
+  if (args.length === 1) {
+    return boundClass.apply(undefined, args);
+  } else {
+    return boundMethod.apply(undefined, args);
+  }
+}
+
+/**
+ * Use boundMethod to bind all methods on the target.prototype
+ */
+function boundClass(target) {
+  // (Using reflect to get all keys including symbols)
+  var keys = undefined;
+  // Use Reflect if exists
+  if (typeof Reflect !== 'undefined' && typeof Reflect.ownKeys === 'function') {
+    keys = Reflect.ownKeys(target.prototype);
+  } else {
+    keys = Object.getOwnPropertyNames(target.prototype);
+    // use symbols if support is provided
+    if (typeof Object.getOwnPropertySymbols === 'function') {
+      keys = keys.concat(Object.getOwnPropertySymbols(target.prototype));
+    }
+  }
+
+  keys.forEach(function (key) {
+    // Ignore special case target method
+    if (key === 'constructor') {
+      return;
+    }
+
+    var descriptor = Object.getOwnPropertyDescriptor(target.prototype, key);
+
+    // Only methods need binding
+    if (typeof descriptor.value === 'function') {
+      Object.defineProperty(target.prototype, key, boundMethod(target, key, descriptor));
+    }
+  });
+  return target;
+}
+
+/**
+ * Return a descriptor removing the value and returning a getter
+ * The getter will return a .bind version of the function
+ * and memoize the result against a symbol on the instance
+ */
+function boundMethod(target, key, descriptor) {
+  var fn = descriptor.value;
+
+  if (typeof fn !== 'function') {
+    throw new Error('@autobind decorator can only be applied to methods not: ' + typeof fn);
+  }
+
+  // In IE11 calling Object.defineProperty has a side-effect of evaluating the
+  // getter for the property which is being replaced. This causes infinite
+  // recursion and an "Out of stack space" error.
+  var definingProperty = false;
+
+  return {
+    configurable: true,
+    get: function get() {
+      if (definingProperty || this === target.prototype || this.hasOwnProperty(key)) {
+        return fn;
+      }
+
+      var boundFn = fn.bind(this);
+      definingProperty = true;
+      Object.defineProperty(this, key, {
+        value: boundFn,
+        configurable: true,
+        writable: true
+      });
+      definingProperty = false;
+      return boundFn;
+    }
+  };
+}
+module.exports = exports['default'];
+
+
 /***/ })
 /******/ ]);
+//# sourceMappingURL=bundle.js.map
