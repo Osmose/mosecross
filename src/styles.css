@@ -1,5 +1,18 @@
+:root {
+  --color-0: #200603;
+  --color-1: #5B4C20;
+  --color-2: #89AC70;
+  --color-3: #D7EDDD;
+}
+
 * {
   box-sizing: border-box;
+}
+
+html {
+  font-family: sans-serif;
+  font-size: 16px;
+  background: var(--color-3);
 }
 
 canvas {
@@ -11,9 +24,17 @@ canvas {
   border-collapse: collapse;
 }
 
+.puzzle-display td:nth-child(5n+6) {
+  border-right-width: 3px;
+}
+
+.puzzle-display tr:nth-child(5n+6) td {
+  border-bottom-width: 3px;
+}
+
 .puzzle-display th,
 .puzzle-display td {
-  border: 1px solid #000;
+  border: 1px solid var(--color-2);
 }
 
 .puzzle-display .cell {
@@ -21,6 +42,8 @@ canvas {
   margin: 0;
   width: 15px;
   height: 15px;
+  position: relative;
+  background-clip: padding-box;
 }
 
 th {
@@ -29,7 +52,21 @@ th {
 }
 
 .puzzle-display .filled {
-  background: #000;
+  background: var(--color-1);
+  box-shadow: inset 2px 2px 0px 0px var(--color-0);
+}
+
+.puzzle-display .wrong::before {
+  content: "X";
+  color: var(--color-1);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  line-height: 22px;
+  font-weight: bold;
 }
 
 .count {
@@ -37,4 +74,14 @@ th {
   width: 15px;
   height: 15px;
   text-align: center;
+}
+
+.puzzle-width {
+  text-align: center;
+  font-weight: bold;
+}
+
+.puzzle-height {
+  vertical-align: middle;
+  font-weight: bold;
 }
