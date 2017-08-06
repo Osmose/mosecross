@@ -69,6 +69,7 @@ class PuzzleDisplay extends React.Component {
                 </div>
               </th>
             ))}
+            <th rowSpan="0" className="puzzle-height">{puzzle.height}</th>
           </tr>
           {puzzle.data.map((rowData, row) => (
             <tr key={`row:${row}`}>
@@ -80,16 +81,50 @@ class PuzzleDisplay extends React.Component {
                 </div>
               </th>
               {rowData.map((cell, col) => (
-                <td
+                <Cell
                   key={`row:${row},col:${col}`}
-                  className={cell ? 'cell filled' : 'cell empty'}
+                  filled={cell}
                 />
               ))}
             </tr>
           ))}
+          <tr><td className="puzzle-width" colSpan={puzzle.width + 2}>{puzzle.width}</td></tr>
         </tbody>
       </table>
     );
+  }
+}
+
+
+@autobind
+class Cell extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      status: 'empty',
+    };
+  }
+
+  handleClick() {
+    const { filled } = this.props;
+    const { status } = this.state;
+    if (status === 'empty') {
+      let status = 'wrong';
+      if (filled) {
+        status = 'filled';
+      }
+      this.setState({ status });
+    }
+  }
+
+  render() {
+    const { status } = this.state;
+    return (
+      <td
+        onClick={this.handleClick}
+        className={`cell ${status}`}
+      />
+    )
   }
 }
 
